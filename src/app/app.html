@@ -132,84 +132,100 @@
   <!-- Carrinho de compras -->
   <section id="carrinho">
     <h2>Meu Carrinho</h2>
-
+  
     <p class="subtitulo">
       Confira os produtos que você escolheu.
     </p>
-
+  
     <div *ngIf="carrinho.length === 0" class="mensagem">
-      Seu carrinho está vazio. Escolha um produto para começar!
+  
+      <p *ngIf="sucessoPedido">
+        {{ sucessoPedido }}
+      </p>
+  
+      <p *ngIf="!sucessoPedido">
+        Seu carrinho está vazio. Escolha um produto para começar!
+      </p>
+  
     </div>
-
+  
     <div *ngIf="carrinho.length > 0">
+  
       <div class="item-carrinho" *ngFor="let item of carrinho">
+  
         <div class="dados-carrinho">
           <h3>{{ item.produto.iditemNavigation?.item1 }}</h3>
-
+  
           <p>
             Preço unitário:
             {{ item.produto.precoVenda | currency:'BRL' }}
           </p>
-
+  
           <p>
             Subtotal:
             {{ subtotalItem(item) | currency:'BRL' }}
           </p>
         </div>
-
+  
         <div class="controles-quantidade">
           <button
             type="button"
             (click)="diminuirQuantidade(item)"
-            aria-label="Diminuir quantidade"
-          >
+            aria-label="Diminuir quantidade">
             −
           </button>
-
+  
           <span>{{ item.quantidade }}</span>
-
+  
           <button
             type="button"
             (click)="aumentarQuantidade(item)"
-            aria-label="Aumentar quantidade"
-          >
+            aria-label="Aumentar quantidade">
             +
           </button>
         </div>
-
+  
         <button
           class="botao-remover"
           type="button"
-          (click)="removerDoCarrinho(item)"
-        >
+          (click)="removerDoCarrinho(item)">
           Remover
         </button>
+  
       </div>
-
+  
       <div class="resumo-carrinho">
+  
         <p>Quantidade de itens: {{ quantidadeTotal }}</p>
-
+  
         <h3>
           Total: {{ valorTotal | currency:'BRL' }}
         </h3>
-
+  
         <button
-        class="botao-limpar" type="button"(click)="carrinho = []">Limpar carrinho
+          class="botao-limpar"
+          type="button"
+          (click)="carrinho = []">
+          Limpar carrinho
         </button>
-
-
-       <button
-        class="btn-finalizar" type="button"(click)="finalizarPedido()"[disabled]="finalizandoPedido || carrinho.length === 0">{{ finalizandoPedido ? 'Finalizando...' : 'Finalizar pedido' }}
-      </button>
-
-<p *ngIf="sucessoPedido">{{ sucessoPedido }}</p>
-<p *ngIf="erroPedido">{{ erroPedido }}</p>
-
-
+  
+        <button
+          class="btn-finalizar"
+          type="button"
+          (click)="finalizarPedido()"
+          [disabled]="finalizandoPedido || carrinho.length === 0">
+          {{ finalizandoPedido ? 'Finalizando...' : 'Finalizar pedido' }}
+        </button>
+  
+        <p *ngIf="erroPedido">
+          {{ erroPedido }}
+        </p>
+  
       </div>
+  
     </div>
   </section>
-
+  
   <!-- Sobre nós -->
   <section id="sobre">
     <h2>Sobre Nós</h2>
