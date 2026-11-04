@@ -1,0 +1,45 @@
+<div class="painel">
+
+    <header class="cabecalho">
+      <div>
+        <h1>Plena Beauty</h1>
+        <p>Painel Administrativo</p>
+      </div>
+  
+      <span class="administrador">Administração</span>
+    </header>
+  
+    <main class="conteudo">
+  
+      <section class="boas-vindas">
+        <h2>Bem-vinda ao painel!</h2>
+        <p>Gerencie os produtos, serviços, estoque e pedidos da sua loja.</p>
+      </section>
+  
+      <section class="area-opcoes">
+  
+        <h2>Gerenciamento</h2>
+  
+        <div class="lista-opcoes">
+  
+          <div class="cartao" *ngFor="let opcao of opcoes">
+  
+            <span class="icone">{{ opcao.icone }}</span>
+  
+            <h3>{{ opcao.titulo }}</h3>
+  
+            <p>{{ opcao.descricao }}</p>
+  
+            <button type="button">
+              Acessar
+            </button>
+  
+          </div>
+  
+        </div>
+  
+      </section>
+  
+    </main>
+  
+  </div>

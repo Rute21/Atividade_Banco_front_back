@@ -1,0 +1,457 @@
+
+<!-- Cabeçalho com o nome da loja -->
+<header>
+    <h1>Plena Beauty</h1>
+    <p>Beleza, cuidado e autoestima.</p>
+  </header>
+  
+  <!-- Menu de navegação da página -->
+  <nav>
+    <a href="#inicio">Início</a>
+    <a href="#produtos">Produtos e Serviços</a>
+    <a href="#carrinho">Carrinho ({{ quantidadeTotal }})</a>
+    <a href="#sobre">Sobre nós</a>
+    <a href="#cadastro">Cadastro</a>
+  </nav>
+  
+  <main>
+  
+    <!-- Apresentação inicial da loja -->
+    <section id="inicio">
+      <h2>Bem-vindo à nossa loja!</h2>
+  
+      <p>
+        Encontre produtos para cuidar de você
+        e valorizar seu bem-estar.
+      </p>
+  
+      <p>
+        Descubra produtos e serviços especiais
+        para sua rotina de beleza e autocuidado.
+      </p>
+  
+      <!-- Link que leva até o catálogo -->
+      <a class="link-produtos" href="#produtos">
+        Conheça nossos produtos e serviços
+      </a>
+    </section>
+  
+    <!-- Catálogo único de produtos e serviços -->
+    <section id="produtos">
+      <h2>Nossos Produtos e Serviços</h2>
+  
+      <p class="subtitulo">
+        Confira nossos produtos e serviços de beleza e bem-estar.
+      </p>
+  
+      <!-- Campo de pesquisa e filtros do catálogo -->
+      <div class="filtros">
+  
+        <!-- Pesquisa os itens pelo nome -->
+        <input
+          type="text"
+          placeholder="Pesquisar pelo nome..."
+          [(ngModel)]="pesquisa"
+        />
+  
+        <!-- Filtra os itens pela categoria -->
+        <select [(ngModel)]="categoriaSelecionada">
+          <option value="">Todas as categorias</option>
+  
+          <option
+            *ngFor="let categoria of categorias"
+            [value]="categoria.idcategoria"
+          >
+            {{ categoria.categoria }}
+          </option>
+        </select>
+  
+        <!-- Filtra entre todos, produtos e serviços -->
+        <select [(ngModel)]="tipoSelecionado">
+          <option value="">Todos os tipos</option>
+          <option value="P">Produto</option>
+          <option value="S">Serviço</option>
+        </select>
+  
+      </div>
+  
+      <!-- Mensagem exibida enquanto os dados são carregados -->
+      <p
+        *ngIf="carregando || carregandoServicos"
+        class="mensagem"
+      >
+        Carregando produtos e serviços...
+      </p>
+  
+      <!-- Mensagem caso ocorra erro ao buscar produtos -->
+      <p *ngIf="erro" class="mensagem erro">
+        {{ erro }}
+      </p>
+  
+      <!-- Mensagem caso ocorra erro ao buscar serviços -->
+      <p *ngIf="erroServicos" class="mensagem erro">
+        {{ erroServicos }}
+      </p>
+  
+      <!-- Exibe os produtos e serviços na mesma lista -->
+      <div
+        class="lista-produtos"
+        *ngIf="!carregando && !carregandoServicos"
+      >
+  
+        <!-- Percorre os itens que passaram pelos filtros -->
+        <div
+          class="produto"
+          *ngFor="let item of itensCatalogo"
+        >
+  
+          <!-- Ícone decorativo do cartão -->
+          <div class="icone-produto">✿</div>
+  
+          <!-- Nome do produto ou serviço -->
+          <h3>{{ item.nome }}</h3>
+  
+          <!-- Descrição do item -->
+          <p class="descricao">
+            {{ item.descricao }}
+          </p>
+  
+          <!-- Preço do item -->
+          <p class="preco">
+            {{ item.preco | currency:'BRL' }}
+          </p>
+  
+          <!-- Informa se o item é produto ou serviço -->
+          <p class="tipo">
+            Tipo: {{ item.tipoItem === 'P' ? 'Produto' : 'Serviço' }}
+          </p>
+  
+          <!-- Mostra a categoria do item -->
+          <p class="categoria">
+            {{ nomeCategoria(item.idcategoria) }}
+          </p>
+  
+          <!-- Botão para adicionar produtos ao carrinho -->
+          <button
+            *ngIf="item.tipoItem === 'P'"
+            class="botao-carrinho"
+            type="button"
+            (click)="adicionarAoCarrinho(item)"
+          >
+            Adicionar ao carrinho
+          </button>
+  
+          <!-- Botão para selecionar serviços -->
+          <button
+            *ngIf="item.tipoItem === 'S'"
+            class="botao-carrinho"
+            type="button"
+            (click)="adicionarAoCarrinho(item)"
+          >
+            Selecionar serviço
+          </button>
+  
+        </div>
+      </div>
+  
+      <!-- Mensagem quando nenhum item é encontrado -->
+      <p
+        *ngIf="
+          !carregando &&
+          !carregandoServicos &&
+          !erro &&
+          !erroServicos &&
+          itensCatalogo.length === 0
+        "
+        class="mensagem"
+      >
+        Nenhum produto ou serviço encontrado.
+      </p>
+  
+    </section>
+  
+    <!-- Área do carrinho de compras -->
+    <section id="carrinho">
+      <h2>Meu Carrinho</h2>
+  
+      <p class="subtitulo">
+        Confira os produtos e serviços que você escolheu.
+      </p>
+  
+      <!-- Mensagem exibida quando o carrinho está vazio -->
+      <div *ngIf="carrinho.length === 0" class="mensagem">
+  
+        <p *ngIf="sucessoPedido">
+          {{ sucessoPedido }}
+        </p>
+  
+        <p *ngIf="!sucessoPedido">
+          Seu carrinho está vazio. Escolha um produto ou serviço para começar!
+        </p>
+  
+      </div>
+  
+      <!-- Exibe os itens adicionados ao carrinho -->
+      <div *ngIf="carrinho.length > 0">
+  
+        <!-- Percorre todos os itens do carrinho -->
+        <div class="item-carrinho" *ngFor="let item of carrinho">
+  
+          <div class="dados-carrinho">
+            <h3>{{ item.nome }}</h3>
+  
+            <!-- Informa se é produto ou serviço -->
+            <p>
+              Tipo: {{ item.tipoItem === 'P' ? 'Produto' : 'Serviço' }}
+            </p>
+  
+            <p>
+              Preço unitário:
+              {{ item.preco | currency:'BRL' }}
+            </p>
+  
+            <p>
+              Subtotal:
+              {{ subtotalItem(item) | currency:'BRL' }}
+            </p>
+          </div>
+  
+          <!-- Botões para alterar a quantidade -->
+          <div class="controles-quantidade">
+            <button
+              type="button"
+              (click)="diminuirQuantidade(item)"
+              aria-label="Diminuir quantidade"
+            >
+              −
+            </button>
+  
+            <span>{{ item.quantidade }}</span>
+  
+            <button
+              type="button"
+              (click)="aumentarQuantidade(item)"
+              aria-label="Aumentar quantidade"
+            >
+              +
+            </button>
+          </div>
+  
+          <!-- Remove o item do carrinho -->
+          <button
+            class="botao-remover"
+            type="button"
+            (click)="removerDoCarrinho(item)"
+          >
+            Remover
+          </button>
+  
+        </div>
+  
+        <!-- Resumo e finalização da compra -->
+        <div class="resumo-carrinho">
+  
+          <p>Quantidade de itens: {{ quantidadeTotal }}</p>
+  
+          <h3>
+            Total: {{ valorTotal | currency:'BRL' }}
+          </h3>
+  
+          <!-- Esvazia o carrinho -->
+          <button
+            class="botao-limpar"
+            type="button"
+            (click)="carrinho = []"
+          >
+            Limpar carrinho
+          </button>
+  
+          <!-- Envia o pedido para o backend -->
+          <button
+            class="btn-finalizar"
+            type="button"
+            (click)="finalizarPedido()"
+            [disabled]="finalizandoPedido || carrinho.length === 0"
+          >
+            {{ finalizandoPedido ? 'Finalizando...' : 'Finalizar pedido' }}
+          </button>
+  
+          <!-- Mostra erros ao finalizar o pedido -->
+          <p *ngIf="erroPedido">
+            {{ erroPedido }}
+          </p>
+  
+        </div>
+      </div>
+    </section>
+  
+    <!-- Apresentação da empresa -->
+    <section id="sobre">
+      <h2>Sobre Nós</h2>
+  
+      <p>
+        Muito mais que beleza, um momento para você!
+  
+        A Plena Beauty nasceu com o propósito de tornar o autocuidado
+        mais simples, especial e acessível.
+  
+        Acreditamos que cuidar de si mesma é uma forma de carinho
+        e que cada pessoa merece se sentir bonita, confiante e bem consigo mesma.
+  
+        Por isso, reunimos produtos de beleza e cuidados pessoais
+        para acompanhar você em diferentes momentos da sua rotina.
+  
+        Nossa missão é oferecer produtos que valorizem a beleza,
+        incentivem o autocuidado e tornem sua rotina mais leve e prazerosa.
+  
+        Nosso compromisso é trabalhar com carinho, dedicação e atenção
+        a cada cliente, buscando proporcionar uma experiência de compra
+        agradável e especial.
+      </p>
+  
+      <p>Plena Beauty: beleza, cuidado e bem-estar!</p>
+    </section>
+  
+    <!-- Formulário de cadastro de clientes -->
+    <section id="cadastro" class="secao-cadastro">
+  
+      <!-- Título e apresentação do cadastro -->
+      <div class="titulo-cadastro">
+        <span class="flor">✿</span>
+        <h2>Cadastro de Clientes</h2>
+        <p>Cadastre-se para fazer parte da Plena Beauty!</p>
+      </div>
+  
+      <!-- Envia os dados do formulário para a função cadastrarPessoa() -->
+      <form
+        class="formulario-cadastro"
+        #formularioPessoa="ngForm"
+        (ngSubmit)="cadastrarPessoa()"
+      >
+  
+        <!-- Campo para o nome -->
+        <div class="campo-cadastro">
+          <label for="nome">Nome completo</label>
+  
+          <input
+            id="nome"
+            type="text"
+            name="nome"
+            [(ngModel)]="novaPessoa.nome"
+            placeholder="Digite seu nome completo"
+            required
+          />
+        </div>
+  
+        <!-- Campo para o CPF -->
+        <div class="campo-cadastro">
+          <label for="cpf">CPF (somente números)</label>
+  
+          <input
+            id="cpf"
+            type="number"
+            name="cpf"
+            [(ngModel)]="novaPessoa.cpf"
+            placeholder="Digite seu CPF"
+            required
+          />
+        </div>
+  
+        <!-- Campo para a data de nascimento -->
+        <div class="campo-cadastro">
+          <label for="dataNascimento">Data de nascimento</label>
+  
+          <input
+            id="dataNascimento"
+            type="date"
+            name="dataNascimento"
+            [(ngModel)]="novaPessoa.dataNascimento"
+            required
+          />
+        </div>
+  
+        <!-- Campo para selecionar o sexo -->
+        <div class="campo-cadastro">
+          <label for="sexo">Sexo</label>
+  
+          <select
+            id="sexo"
+            name="sexo"
+            [(ngModel)]="novaPessoa.sexo"
+            required
+          >
+            <option value="">Selecione</option>
+            <option value="F">Feminino</option>
+            <option value="M">Masculino</option>
+            <option value="O">Outro</option>
+            <option value="N">Prefiro não informar</option>
+          </select>
+        </div>
+  
+        <!-- Campo para o e-mail -->
+        <div class="campo-cadastro">
+          <label for="email">E-mail</label>
+  
+          <input
+            id="email"
+            type="email"
+            name="email"
+            [(ngModel)]="novaPessoa.email"
+            placeholder="exemplo@email.com"
+            required
+          />
+        </div>
+  
+        <!-- Campo para o telefone -->
+        <div class="campo-cadastro">
+          <label for="telefone">Telefone (somente números)</label>
+  
+          <input
+            id="telefone"
+            type="number"
+            name="telefone"
+            [(ngModel)]="novaPessoa.telefone"
+            placeholder="Digite seu telefone"
+            required
+          />
+        </div>
+  
+        <!-- Botão para cadastrar a cliente -->
+        <button
+          type="submit"
+          class="botao-cadastrar"
+          [disabled]="enviandoPessoa || formularioPessoa.invalid"
+        >
+          {{ enviandoPessoa ? 'Cadastrando...' : 'Cadastrar cliente' }}
+        </button>
+  
+        <!-- Mensagem de sucesso do cadastro -->
+        <p
+          *ngIf="sucessoPessoa"
+          class="mensagem-sucesso"
+          role="status"
+        >
+          {{ sucessoPessoa }}
+        </p>
+  
+        <!-- Mensagem de erro do cadastro -->
+        <p
+          *ngIf="erroPessoa"
+          class="mensagem-erro"
+          role="alert"
+        >
+          {{ erroPessoa }}
+        </p>
+  
+      </form>
+    </section>
+  
+  </main>
+  
+  <!-- Rodapé da página -->
+  <footer>
+    <h3>Plena Beauty</h3>
+    <p>Beleza, cuidado e autoestima.</p>
+    <p>Todos os direitos reservados.</p>
+  </footer>
+  

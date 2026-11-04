@@ -1,6 +1,7 @@
 
 // Importa os recursos necessários do Angular
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 // Permite utilizar recursos como *ngIf, *ngFor e pipes
 import { CommonModule } from '@angular/common';
@@ -22,19 +23,23 @@ import {
 import { timeout } from 'rxjs';
 
 // Define como será cada item dentro do carrinho
+// Agora ele pode representar um produto ou um serviço
 interface ItemCarrinho {
-  produto: Produto;
+  idItem: number;
+  nome: string;
+  preco: number;
+  tipoItem: string;
   quantidade: number;
 }
 
 // Define um formato único para mostrar produtos e serviços juntos
 interface ItemCatalogo {
+  iditem: number;
   nome: string;
   descricao: string | null;
   preco: number;
   tipoItem: string;
   idcategoria: number | undefined;
-  produto?: Produto;
 }
 
 // Configura o componente principal da aplicação
@@ -59,7 +64,7 @@ export class App implements OnInit {
   servicos: Servico[] = [];
   categorias: Categoria[] = [];
 
-  // Lista de produtos escolhidos pelo cliente
+  // Lista de produtos e serviços escolhidos pelo cliente
   carrinho: ItemCarrinho[] = [];
 
   // Controlam o carregamento e as mensagens de erro
@@ -160,16 +165,17 @@ export class App implements OnInit {
 
     // Transforma os produtos no formato utilizado pelo catálogo
     const listaProdutos: ItemCatalogo[] = this.produtos.map((produto) => ({
+      iditem: produto.iditem,
       nome: produto.iditemNavigation?.item1 || '',
       descricao: produto.iditemNavigation?.descricaoItem || '',
       preco: Number(produto.precoVenda),
       tipoItem: 'P',
-      idcategoria: produto.iditemNavigation?.idcategoria,
-      produto: produto
+      idcategoria: produto.iditemNavigation?.idcategoria
     }));
 
     // Transforma os serviços no mesmo formato dos produtos
     const listaServicos: ItemCatalogo[] = this.servicos.map((servico) => ({
+      iditem: servico.iditem,
       nome: servico.item1 || '',
       descricao: servico.descricaoItem || '',
       preco: Number(servico.preco),
@@ -285,33 +291,41 @@ export class App implements OnInit {
       });
   }
 
-  // Adiciona um produto ao carrinho
-  adicionarAoCarrinho(produto: Produto): void {
+  // Adiciona um produto ou serviço ao carrinho
+  adicionarAoCarrinho(item: ItemCatalogo): void {
+
     this.sucessoPedido = '';
     this.erroPedido = '';
 
-    // Verifica se o produto já está no carrinho
+    // Verifica se o item já está no carrinho
     const itemExistente = this.carrinho.find(
-      (item) => item.produto.iditem === produto.iditem
+      (produto) => produto.idItem === item.iditem
     );
 
     // Se já existe, aumenta a quantidade
     if (itemExistente) {
       itemExistente.quantidade++;
     } else {
+
       // Se não existe, adiciona um novo item
-      this.carrinho.push({ produto, quantidade: 1 });
+      this.carrinho.push({
+        idItem: item.iditem,
+        nome: item.nome,
+        preco: item.preco,
+        tipoItem: item.tipoItem,
+        quantidade: 1
+      });
     }
   }
 
-  // Aumenta a quantidade de um produto no carrinho
+  // Aumenta a quantidade de um produto ou serviço
   aumentarQuantidade(item: ItemCarrinho): void {
     item.quantidade++;
     this.sucessoPedido = '';
     this.erroPedido = '';
   }
 
-  // Diminui a quantidade de um produto no carrinho
+  // Diminui a quantidade de um produto ou serviço
   diminuirQuantidade(item: ItemCarrinho): void {
     if (item.quantidade > 1) {
       item.quantidade--;
@@ -323,7 +337,7 @@ export class App implements OnInit {
     this.erroPedido = '';
   }
 
-  // Remove um produto do carrinho
+  // Remove um produto ou serviço do carrinho
   removerDoCarrinho(item: ItemCarrinho): void {
     this.carrinho = this.carrinho.filter(
       (produto) => produto !== item
@@ -343,9 +357,9 @@ export class App implements OnInit {
       return;
     }
 
-    // Verifica se existe algum produto no carrinho
+    // Verifica se existe algum item no carrinho
     if (this.carrinho.length === 0) {
-      this.erroPedido = 'Adicione produtos ao carrinho antes de finalizar.';
+      this.erroPedido = 'Adicione produtos ou serviços ao carrinho antes de finalizar.';
       return;
     }
 
@@ -357,16 +371,16 @@ export class App implements OnInit {
 
     // Verifica se os códigos, quantidades e preços são válidos
     const itensInvalidos = this.carrinho.some((item) =>
-      !Number.isInteger(Number(item.produto.iditem)) ||
-      Number(item.produto.iditem) <= 0 ||
+      !Number.isInteger(Number(item.idItem)) ||
+      Number(item.idItem) <= 0 ||
       !Number.isInteger(item.quantidade) ||
       item.quantidade <= 0 ||
-      !Number.isFinite(Number(item.produto.precoVenda)) ||
-      Number(item.produto.precoVenda) < 0
+      !Number.isFinite(Number(item.preco)) ||
+      Number(item.preco) < 0
     );
 
     if (itensInvalidos) {
-      this.erroPedido = 'Confira os produtos, quantidades e preços do carrinho.';
+      this.erroPedido = 'Confira os produtos, serviços, quantidades e preços do carrinho.';
       return;
     }
 
@@ -384,10 +398,10 @@ export class App implements OnInit {
       dataAtendimento,
       statusAtendimento: 'P',
       itens: this.carrinho.map((item) => ({
-        idItem: Number(item.produto.iditem),
+        idItem: Number(item.idItem),
         idFuncionario: this.idFuncionario,
         quantidade: Number(item.quantidade),
-        valorUnitario: Number(item.produto.precoVenda)
+        valorUnitario: Number(item.preco)
       }))
     };
 
@@ -428,7 +442,7 @@ export class App implements OnInit {
       });
   }
 
-  // Calcula a quantidade total de produtos no carrinho
+  // Calcula a quantidade total de itens no carrinho
   get quantidadeTotal(): number {
     return this.carrinho.reduce(
       (total, item) => total + item.quantidade,
@@ -436,16 +450,15 @@ export class App implements OnInit {
     );
   }
 
-  // Calcula o subtotal de um produto
+  // Calcula o subtotal de um produto ou serviço
   subtotalItem(item: ItemCarrinho): number {
-    return Number(item.produto.precoVenda) * item.quantidade;
+    return item.preco * item.quantidade;
   }
 
   // Calcula o valor total do carrinho
   get valorTotal(): number {
     return this.carrinho.reduce(
-      (total, item) =>
-        total + Number(item.produto.precoVenda) * item.quantidade,
+      (total, item) => total + item.preco * item.quantidade,
       0
     );
   }

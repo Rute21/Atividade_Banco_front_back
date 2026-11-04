@@ -1,0 +1,99 @@
+/* Fundo geral do painel */
+.painel {
+    min-height: 100vh;
+    background-color: #faf4f4;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Cabeçalho */
+  .cabecalho {
+    background-color: #702c46;
+    color: white;
+    padding: 25px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .cabecalho h1 {
+    margin: 0;
+    font-size: 28px;
+  }
+  
+  .cabecalho p {
+    margin: 5px 0 0;
+    color: #f1dce3;
+  }
+  
+  .administrador {
+    background-color: #a85e78;
+    padding: 10px 18px;
+    border-radius: 20px;
+  }
+  
+  /* Conteúdo principal */
+  .conteudo {
+    padding: 35px 50px;
+  }
+  
+  /* Boas-vindas */
+  .boas-vindas {
+    margin-bottom: 35px;
+  }
+  
+  .boas-vindas h2 {
+    color: #702c46;
+    font-size: 25px;
+  }
+  
+  .boas-vindas p {
+    color: #666;
+  }
+  
+  /* Opções */
+  .area-opcoes h2 {
+    color: #702c46;
+    margin-bottom: 20px;
+  }
+  
+  .lista-opcoes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+  }
+  
+  /* Cartões */
+  .cartao {
+    background-color: white;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #eedde3;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .icone {
+    font-size: 35px;
+  }
+  
+  .cartao h3 {
+    color: #702c46;
+  }
+  
+  .cartao p {
+    color: #777;
+    min-height: 40px;
+  }
+  
+  /* Botões */
+  .cartao button {
+    background-color: #a85e78;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .cartao button:hover {
+    background-color: #702c46;
+  }
