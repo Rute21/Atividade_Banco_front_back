@@ -23,6 +23,16 @@ export interface Produto {
   };
 }
 
+export interface Servico {
+  iditem: number;
+  idcategoria: number;
+  item1: string | null;
+  descricaoItem: string | null;
+  preco: number;
+  tipoItem: string | null;
+  ativoProdutoServico: string;
+}
+
 export interface Pessoa {
   idPessoa?: number;
   nome: string;
@@ -34,7 +44,6 @@ export interface Pessoa {
   ativoPessoa: string;
 }
 
-// Dados enviados para registrar um pedido
 export interface AtendimentoItemPost {
   idItem: number;
   idFuncionario: number;
@@ -42,7 +51,6 @@ export interface AtendimentoItemPost {
   valorUnitario: number;
 }
 
-// Pedido completo
 export interface AtendimentoPost {
   idPessoa: number;
   dataAtendimento: string;
@@ -59,6 +67,9 @@ export class ProdutoApi {
   private readonly apiUrl =
     'https://localhost:7196/api/ProdutoItem';
 
+  private readonly servicoUrl =
+    'https://localhost:7196/api/ItemServico';
+
   private readonly categoriaUrl =
     'https://localhost:7196/api/Categorium';
 
@@ -71,6 +82,11 @@ export class ProdutoApi {
   // Listar produtos
   listar(): Observable<Produto[]> {
     return this.http.get<Produto[]>(this.apiUrl);
+  }
+
+  // Listar serviços
+  listarServicos(): Observable<Servico[]> {
+    return this.http.get<Servico[]>(this.servicoUrl);
   }
 
   // Buscar produto pelo ID
@@ -88,17 +104,17 @@ export class ProdutoApi {
     return this.http.get<Pessoa[]>(this.pessoaUrl);
   }
 
-  // Cadastrar uma pessoa
+  // Cadastrar pessoa
   cadastrarPessoa(pessoa: Pessoa): Observable<unknown> {
     return this.http.post(this.pessoaUrl, pessoa);
   }
 
-  // Buscar uma pessoa pelo ID
+  // Buscar pessoa pelo ID
   buscarPessoaPorId(id: number): Observable<Pessoa> {
     return this.http.get<Pessoa>(`${this.pessoaUrl}/${id}`);
   }
 
-  // Atualizar uma pessoa
+  // Atualizar pessoa
   atualizarPessoa(
     id: number,
     pessoa: Pessoa
@@ -106,7 +122,7 @@ export class ProdutoApi {
     return this.http.put(`${this.pessoaUrl}/${id}`, pessoa);
   }
 
-  // Excluir uma pessoa
+  // Excluir pessoa
   excluirPessoa(id: number): Observable<unknown> {
     return this.http.delete(`${this.pessoaUrl}/${id}`);
   }

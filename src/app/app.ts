@@ -1,56 +1,98 @@
 
+// Importa os recursos necessários do Angular
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+
+// Permite utilizar recursos como *ngIf, *ngFor e pipes
 import { CommonModule } from '@angular/common';
+
+// Permite utilizar formulários e o [(ngModel)]
 import { FormsModule } from '@angular/forms';
+
+// Importa os tipos e o serviço que fazem a comunicação com o backend
 import {
   ProdutoApi,
   Produto,
+  Servico,
   Categoria,
   Pessoa,
   AtendimentoPost
 } from './services/produto-api';
+
+// Importa o timeout para limitar o tempo de espera das requisições
 import { timeout } from 'rxjs';
 
+// Define como será cada item dentro do carrinho
 interface ItemCarrinho {
   produto: Produto;
   quantidade: number;
 }
 
+// Define um formato único para mostrar produtos e serviços juntos
+interface ItemCatalogo {
+  nome: string;
+  descricao: string | null;
+  preco: number;
+  tipoItem: string;
+  idcategoria: number | undefined;
+  produto?: Produto;
+}
+
+// Configura o componente principal da aplicação
 @Component({
   selector: 'app-root',
   imports: [CommonModule, FormsModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
+
+// Classe principal da página
 export class App implements OnInit {
+
+  // Cria acesso ao serviço que conversa com a API
   private readonly produtoApi = inject(ProdutoApi);
+
+  // Permite atualizar a tela depois de receber os dados
   private readonly detector = inject(ChangeDetectorRef);
 
+  // Listas que armazenam os dados recebidos do backend
   produtos: Produto[] = [];
+  servicos: Servico[] = [];
   categorias: Categoria[] = [];
+
+  // Lista de produtos escolhidos pelo cliente
   carrinho: ItemCarrinho[] = [];
 
+  // Controlam o carregamento e as mensagens de erro
   carregando = true;
+  carregandoServicos = true;
   erro = '';
+  erroServicos = '';
 
+  // Guardam o que o cliente digita e seleciona nos filtros
   pesquisa = '';
   categoriaSelecionada = '';
   tipoSelecionado = '';
 
+  // Guarda os dados da pessoa que será cadastrada
   novaPessoa: Pessoa = this.pessoaVazia();
 
+  // Controlam o cadastro de clientes
   enviandoPessoa = false;
   sucessoPessoa = '';
   erroPessoa = '';
 
+  // Guarda o ID da cliente cadastrada
   idPessoaCadastrada: number | null = null;
 
+  // Controlam a finalização do pedido
   finalizandoPedido = false;
   sucessoPedido = '';
   erroPedido = '';
 
+  // ID do funcionário utilizado no registro do atendimento
   private readonly idFuncionario = 76;
 
+  // Cria um formulário vazio para uma nova pessoa
   pessoaVazia(): Pessoa {
     return {
       nome: '',
@@ -63,7 +105,10 @@ export class App implements OnInit {
     };
   }
 
+  // Executa automaticamente quando a página é iniciada
   ngOnInit(): void {
+
+    // Busca os produtos cadastrados no backend
     this.produtoApi.listar().subscribe({
       next: (dados) => {
         this.produtos = dados;
@@ -78,6 +123,27 @@ export class App implements OnInit {
       }
     });
 
+    // Busca os serviços cadastrados no backend
+    this.produtoApi.listarServicos().subscribe({
+      next: (dados) => {
+
+        // Mantém somente os registros identificados como serviço (S)
+        this.servicos = dados.filter(
+          (servico) => servico.tipoItem === 'S'
+        );
+
+        this.carregandoServicos = false;
+        this.detector.detectChanges();
+      },
+      error: (erro) => {
+        console.error('Erro ao carregar serviços:', erro);
+        this.erroServicos = 'Não foi possível carregar os serviços.';
+        this.carregandoServicos = false;
+        this.detector.detectChanges();
+      }
+    });
+
+    // Busca as categorias cadastradas no backend
     this.produtoApi.listarCategorias().subscribe({
       next: (dados) => {
         this.categorias = dados;
@@ -89,37 +155,54 @@ export class App implements OnInit {
     });
   }
 
-  get produtosFiltrados(): Produto[] {
-    return this.produtos.filter((produto) => {
-      const nome = produto.iditemNavigation?.item1 || '';
-      const categoria = produto.iditemNavigation?.idcategoria;
-      const tipo = produto.iditemNavigation?.tipoItem || '';
+  // Junta os produtos e serviços em uma única lista
+  get itensCatalogo(): ItemCatalogo[] {
 
-      const correspondeNome = nome
+    // Transforma os produtos no formato utilizado pelo catálogo
+    const listaProdutos: ItemCatalogo[] = this.produtos.map((produto) => ({
+      nome: produto.iditemNavigation?.item1 || '',
+      descricao: produto.iditemNavigation?.descricaoItem || '',
+      preco: Number(produto.precoVenda),
+      tipoItem: 'P',
+      idcategoria: produto.iditemNavigation?.idcategoria,
+      produto: produto
+    }));
+
+    // Transforma os serviços no mesmo formato dos produtos
+    const listaServicos: ItemCatalogo[] = this.servicos.map((servico) => ({
+      nome: servico.item1 || '',
+      descricao: servico.descricaoItem || '',
+      preco: Number(servico.preco),
+      tipoItem: 'S',
+      idcategoria: servico.idcategoria
+    }));
+
+    // Junta as duas listas e aplica os filtros escolhidos pelo cliente
+    return [...listaProdutos, ...listaServicos].filter((item) => {
+
+      // Verifica se o nome corresponde ao texto pesquisado
+      const correspondeNome = item.nome
         .toLowerCase()
         .includes(this.pesquisa.toLowerCase());
 
+      // Verifica se o item pertence à categoria selecionada
       const correspondeCategoria =
         this.categoriaSelecionada === '' ||
-        String(categoria) === this.categoriaSelecionada;
+        String(item.idcategoria) === this.categoriaSelecionada;
 
+      // Verifica se deve mostrar todos, somente produtos ou serviços
       const correspondeTipo =
         this.tipoSelecionado === '' ||
-        tipo.toLowerCase() === this.tipoSelecionado.toLowerCase();
+        item.tipoItem === this.tipoSelecionado;
 
+      // O item só aparece quando atende aos filtros
       return correspondeNome && correspondeCategoria && correspondeTipo;
     });
   }
 
-  get tipos(): string[] {
-    return [...new Set(
-      this.produtos
-        .map((produto) => produto.iditemNavigation?.tipoItem)
-        .filter((tipo): tipo is string => !!tipo)
-    )];
-  }
-
+  // Procura o nome da categoria pelo seu código
   nomeCategoria(idcategoria: number | undefined): string {
+
     if (idcategoria === undefined) {
       return 'Categoria não informada';
     }
@@ -133,10 +216,12 @@ export class App implements OnInit {
       : `Categoria ${idcategoria}`;
   }
 
+  // Cadastra uma nova cliente no sistema
   cadastrarPessoa(): void {
     this.sucessoPessoa = '';
     this.erroPessoa = '';
 
+    // Verifica se os campos obrigatórios foram preenchidos
     if (
       !this.novaPessoa.nome.trim() ||
       !this.novaPessoa.cpf ||
@@ -151,6 +236,7 @@ export class App implements OnInit {
 
     this.enviandoPessoa = true;
 
+    // Organiza os dados antes de enviar para a API
     const pessoa: Pessoa = {
       nome: this.novaPessoa.nome.trim(),
       cpf: Number(this.novaPessoa.cpf),
@@ -161,12 +247,14 @@ export class App implements OnInit {
       ativoPessoa: 'S'
     };
 
+    // Envia os dados para cadastrar a cliente
     this.produtoApi.cadastrarPessoa(pessoa)
       .pipe(timeout(15000))
       .subscribe({
         next: (resposta: any) => {
           console.log('Cliente cadastrada:', resposta);
 
+          // Tenta identificar o código da cliente retornado pela API
           const idRecebido =
             resposta?.idpessoa ??
             resposta?.idPessoa ??
@@ -179,6 +267,7 @@ export class App implements OnInit {
             ? 'Cliente cadastrada com sucesso! Já pode finalizar seu pedido.'
             : 'Cadastro realizado, mas não foi possível identificar o ID da cliente.';
 
+          // Limpa o formulário depois do cadastro
           this.novaPessoa = this.pessoaVazia();
           this.enviandoPessoa = false;
           this.detector.detectChanges();
@@ -196,27 +285,33 @@ export class App implements OnInit {
       });
   }
 
+  // Adiciona um produto ao carrinho
   adicionarAoCarrinho(produto: Produto): void {
     this.sucessoPedido = '';
     this.erroPedido = '';
 
+    // Verifica se o produto já está no carrinho
     const itemExistente = this.carrinho.find(
       (item) => item.produto.iditem === produto.iditem
     );
 
+    // Se já existe, aumenta a quantidade
     if (itemExistente) {
       itemExistente.quantidade++;
     } else {
+      // Se não existe, adiciona um novo item
       this.carrinho.push({ produto, quantidade: 1 });
     }
   }
 
+  // Aumenta a quantidade de um produto no carrinho
   aumentarQuantidade(item: ItemCarrinho): void {
     item.quantidade++;
     this.sucessoPedido = '';
     this.erroPedido = '';
   }
 
+  // Diminui a quantidade de um produto no carrinho
   diminuirQuantidade(item: ItemCarrinho): void {
     if (item.quantidade > 1) {
       item.quantidade--;
@@ -228,6 +323,7 @@ export class App implements OnInit {
     this.erroPedido = '';
   }
 
+  // Remove um produto do carrinho
   removerDoCarrinho(item: ItemCarrinho): void {
     this.carrinho = this.carrinho.filter(
       (produto) => produto !== item
@@ -237,24 +333,29 @@ export class App implements OnInit {
     this.erroPedido = '';
   }
 
+  // Finaliza o pedido e envia os dados para o backend
   finalizarPedido(): void {
     this.sucessoPedido = '';
     this.erroPedido = '';
 
+    // Impede que o pedido seja enviado mais de uma vez
     if (this.finalizandoPedido) {
       return;
     }
 
+    // Verifica se existe algum produto no carrinho
     if (this.carrinho.length === 0) {
       this.erroPedido = 'Adicione produtos ao carrinho antes de finalizar.';
       return;
     }
 
+    // Exige que uma cliente esteja cadastrada
     if (this.idPessoaCadastrada === null) {
       this.erroPedido = 'Cadastre a cliente antes de finalizar o pedido.';
       return;
     }
 
+    // Verifica se os códigos, quantidades e preços são válidos
     const itensInvalidos = this.carrinho.some((item) =>
       !Number.isInteger(Number(item.produto.iditem)) ||
       Number(item.produto.iditem) <= 0 ||
@@ -269,6 +370,7 @@ export class App implements OnInit {
       return;
     }
 
+    // Obtém a data atual no formato ano-mês-dia
     const dataHoje = new Date();
     const dataAtendimento = [
       dataHoje.getFullYear(),
@@ -276,6 +378,7 @@ export class App implements OnInit {
       String(dataHoje.getDate()).padStart(2, '0')
     ].join('-');
 
+    // Monta os dados que serão enviados para a API
     const pedido: AtendimentoPost = {
       idPessoa: Number(this.idPessoaCadastrada),
       dataAtendimento,
@@ -292,6 +395,7 @@ export class App implements OnInit {
 
     this.finalizandoPedido = true;
 
+    // Envia o pedido para o backend
     this.produtoApi.finalizarPedido(pedido)
       .pipe(timeout(15000))
       .subscribe({
@@ -307,6 +411,7 @@ export class App implements OnInit {
           console.error('Erro ao finalizar pedido:', erro);
           console.error('Detalhes recebidos da API:', erro?.error);
 
+          // Mostra uma mensagem conforme o tipo de erro
           if (erro.name === 'TimeoutError') {
             this.erroPedido = 'A API demorou para responder. Tente novamente após verificar o servidor.';
           } else if (erro.status === 0) {
@@ -323,6 +428,7 @@ export class App implements OnInit {
       });
   }
 
+  // Calcula a quantidade total de produtos no carrinho
   get quantidadeTotal(): number {
     return this.carrinho.reduce(
       (total, item) => total + item.quantidade,
@@ -330,10 +436,12 @@ export class App implements OnInit {
     );
   }
 
+  // Calcula o subtotal de um produto
   subtotalItem(item: ItemCarrinho): number {
     return Number(item.produto.precoVenda) * item.quantidade;
   }
 
+  // Calcula o valor total do carrinho
   get valorTotal(): number {
     return this.carrinho.reduce(
       (total, item) =>
